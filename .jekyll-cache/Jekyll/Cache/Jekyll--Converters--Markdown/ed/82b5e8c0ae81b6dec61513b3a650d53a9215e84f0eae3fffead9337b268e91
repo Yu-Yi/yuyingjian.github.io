@@ -1,0 +1,17 @@
+I"�<ul id="markdown-toc">
+  <li><a href="#1-没有负效应的-hash-表图" id="markdown-toc-1-没有负效应的-hash-表图">1. 没有负效应的 Hash 表/图</a></li>
+</ul>
+
+<p>在这里，主要是累计 JavaScript 编程过程中的一些小的 tips，作为对<a href="/2017/07/20/Clean-Code">编写自己的代码库</a> 一节的补充。</p>
+
+<p>同时，也是希望写出更为<strong>可靠</strong>的代码。</p>
+
+<!-- more -->
+
+<h2 id="1-没有负效应的-hash-表图">1. 没有负效应的 Hash 表/图</h2>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">const</span> <span class="nx">map</span> <span class="o">=</span> <span class="nb">Object</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>如果采用字面值形式 <code class="language-plaintext highlighter-rouge">const map = {}</code>，等同于 <code class="language-plaintext highlighter-rouge">Object.create(Object.prototype)</code>。从而，map 会继承来自 Object 的一些熟悉和方法。使用上述方法创建的 hash 表/图 什么都不会从 Object 继承。</p>
+:ET

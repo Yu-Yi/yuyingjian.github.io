@@ -1,0 +1,549 @@
+I"y�<ul id="markdown-toc">
+  <li><a href="#一个概念" id="markdown-toc-一个概念">一个概念</a>    <ul>
+      <li><a href="#event-loop" id="markdown-toc-event-loop">Event Loop</a></li>
+      <li><a href="#并行" id="markdown-toc-并行">并行</a></li>
+      <li><a href="#运行至完成" id="markdown-toc-运行至完成">运行至完成</a></li>
+      <li><a href="#并发" id="markdown-toc-并发">并发</a></li>
+      <li><a href="#job-queue" id="markdown-toc-job-queue">Job queue</a></li>
+    </ul>
+  </li>
+  <li><a href="#回调函数" id="markdown-toc-回调函数">回调函数</a>    <ul>
+      <li><a href="#callback-hell" id="markdown-toc-callback-hell">callback hell</a></li>
+      <li><a href="#信任问题" id="markdown-toc-信任问题">信任问题</a></li>
+      <li><a href="#拯救回调" id="markdown-toc-拯救回调">拯救回调</a>        <ul>
+          <li><a href="#分离回调的设计" id="markdown-toc-分离回调的设计">分离回调的设计</a></li>
+          <li><a href="#错误优先风格" id="markdown-toc-错误优先风格">错误优先风格</a></li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li><a href="#promise" id="markdown-toc-promise">Promise</a>    <ul>
+      <li><a href="#基本概念" id="markdown-toc-基本概念">基本概念</a></li>
+      <li><a href="#catch" id="markdown-toc-catch">catch()</a></li>
+      <li><a href="#promise-链" id="markdown-toc-promise-链">promise 链</a></li>
+      <li><a href="#new-promise-构造器" id="markdown-toc-new-promise-构造器">new Promise() 构造器</a></li>
+      <li><a href="#创建-settled-promise" id="markdown-toc-创建-settled-promise">创建 settled promise</a></li>
+      <li><a href="#promiseall-和-promiserace" id="markdown-toc-promiseall-和-promiserace">Promise.all([…]) 和 Promise.race([…])</a></li>
+      <li><a href="#promise-不可撤销" id="markdown-toc-promise-不可撤销">Promise 不可撤销</a></li>
+    </ul>
+  </li>
+  <li><a href="#async-和-await" id="markdown-toc-async-和-await">async 和 await</a></li>
+</ul>
+
+<p>异步编程是 JavaScript 中一个非常重要的概念。异步的核心是<strong>现在</strong>和<strong>稍后</strong>。也就是说我们的一个 JavaScript 程序，仅有其中的一个代码块会在 <em>现在</em> 执行，而其他的会 <em>稍后</em> 执行。</p>
+
+<p>最常见的异步编程就是回调函数了。</p>
+
+<!-- more -->
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//ajax() 是某个包中任意的 Ajax 函数</span>
+<span class="nx">ajax</span> <span class="p">(</span><span class="dl">'</span><span class="s1">http://xiaokedada.com</span><span class="dl">'</span><span class="p">,</span><span class="kd">function</span> <span class="nx">callbackFunction</span><span class="p">(</span><span class="nx">data</span><span class="p">){</span>
+    <span class="c1">//应答代码</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p>在异步调用 ajax 的过程中，<code class="language-plaintext highlighter-rouge">callbackFunction()</code> 不会马上执行，而是 稍后 执行。</p>
+
+<p>最开始，我们要理解一些概念之类的东西。</p>
+
+<h2 id="一个概念">一个概念</h2>
+
+<h3 id="event-loop">Event Loop</h3>
+
+<p>就拿上面这个 ajax 的回调函数来讲，当有数据需要返回时，就会将这个回调函数插入 Event Loop 来安排它的执行。Event Loop 类似于下面的代码:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//Event Loop 表现得像一个队列</span>
+
+<span class="kd">var</span> <span class="nx">eventLoop</span> <span class="o">=</span> <span class="p">[];</span>
+<span class="kd">var</span> <span class="nx">event</span><span class="p">;</span>
+
+<span class="c1">//不断轮询</span>
+<span class="k">while</span><span class="p">(</span><span class="kc">true</span><span class="p">){</span>
+    <span class="c1">// 执行一个 tick</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">eventLoop</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+        <span class="nx">event</span> <span class="o">=</span> <span class="nx">eventLoop</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span> <span class="c1">//shift() 模拟队列，取得下一个事件</span>
+    <span class="p">}</span>
+    <span class="c1">// 执行下一个事件</span>
+    <span class="k">try</span> <span class="p">(){</span>
+        <span class="nx">event</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">catch</span> <span class="p">(</span><span class="nx">err</span><span class="p">){</span>
+        <span class="nx">reportErr</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="并行">并行</h3>
+
+<p>异步和并行是两个不同的概念。并行表示事情可以同时发生，最常见的就是 <em>线程</em> 和 <em>进程</em>。进程和线程独立地、可能同时地执行。</p>
+
+<h3 id="运行至完成">运行至完成</h3>
+
+<p>因为 JavaScript 是单线程，所以一个函数(比如: <code class="language-plaintext highlighter-rouge">foo(){...}</code>) 内部的代码是 <strong>原子性</strong> 的，意味着 <code class="language-plaintext highlighter-rouge">foo()</code> 一旦执行，就必须全部执行，而不会被其他 <em>函数</em> 打断。</p>
+
+<h3 id="并发">并发</h3>
+
+<p>并发是当两个或多个 <em>进程</em> 在同一时间段内同时执行。可以认为并发是 <em>进程</em> 级别的并行机制，而不是 <em>线程</em> 级别的并行机制。</p>
+
+<h3 id="job-queue">Job queue</h3>
+
+<p>Job queue 是 Event Loop 之上的一层新概念，可以认为:</p>
+
+<blockquote>
+  <p>Job queue 是挂靠在事件轮询队列的每个 tick 末尾的队列。</p>
+</blockquote>
+
+<p>有点像 <code class="language-plaintext highlighter-rouge">setTimeout(...,0)</code> 的黑科技，以一种更明确的方式告诉你: <strong>稍后，但尽快</strong>。</p>
+
+<hr />
+
+<h2 id="回调函数">回调函数</h2>
+
+<p>异步编程就基本的形式，就是 事件模型。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">let</span> <span class="nx">button</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="dl">"</span><span class="s2">my-btn</span><span class="dl">"</span><span class="p">);</span>
+<span class="nx">button</span><span class="p">.</span><span class="nx">onclick</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//do something</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>按钮在被点击之后，<code class="language-plaintext highlighter-rouge">onclick</code> 内部的代码才会加入 EventLoop 进行执行。</p>
+
+<p>在比如:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">setTimeout</span><span class="p">(</span><span class="kd">function</span><span class="p">(){...},</span> <span class="mi">100</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">i love yuer</span><span class="dl">'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">setTimeout()</code> 中的回调函数并不会马上执行，而是会在 100ms 之后被加入到 Event Loop。</p>
+
+<p>Node.js 诞生之后，回调模式就更广泛了。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">readFile</span> <span class="p">(</span><span class="dl">"</span><span class="s2">my.txt</span><span class="dl">"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="nx">contents</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="nx">err</span><span class="p">;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">contents</span><span class="p">)</span>
+<span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">i love yuer</span><span class="dl">'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>回调函数是万能的吗？并不是。</p>
+
+<h3 id="callback-hell">callback hell</h3>
+
+<p><strong>回调地狱</strong> 是回调函数面临的第一个问题。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">listen</span><span class="p">(</span><span class="dl">"</span><span class="s2">click</span><span class="dl">"</span><span class="p">,</span><span class="kd">function</span> <span class="nx">handler</span><span class="p">(</span><span class="nx">evt</span><span class="p">){</span>
+    <span class="nx">setTimeout</span><span class="p">(</span><span class="kd">function</span> <span class="nx">request</span><span class="p">(){</span>
+        <span class="nx">ajax</span><span class="p">(</span><span class="dl">'</span><span class="s1">http://xiaodedada.com</span><span class="dl">'</span><span class="p">,</span><span class="kd">function</span> <span class="nx">response</span><span class="p">(</span><span class="nx">text</span><span class="p">){</span>
+            <span class="p">...</span>
+        <span class="p">})</span>
+    <span class="p">})</span>
+<span class="p">})</span>
+</code></pre></div></div>
+
+<h3 id="信任问题">信任问题</h3>
+
+<p>还是我们那个开头的 <code class="language-plaintext highlighter-rouge">ajax()</code> 函数。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">//A</span>
+<span class="nx">ajax</span><span class="p">(</span><span class="dl">"</span><span class="s2">http://xiaodedada.com</span><span class="dl">"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(){</span>
+    <span class="c1">//B</span>
+<span class="p">});</span>
+<span class="c1">//C</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">A</code> 和 <code class="language-plaintext highlighter-rouge">C</code> 是 现在 发生的，而且在我们的控制之下，但是 <code class="language-plaintext highlighter-rouge">B</code> 推迟到 稍后 发生，而且是在 <code class="language-plaintext highlighter-rouge">ajax()</code> 的控制之下。如果这个 <code class="language-plaintext highlighter-rouge">ajax()</code> 不是你写的，更一般的情况是，它是由第三方提供，这意味着 <strong>控制权被转交给第三方</strong>(控制反转)。你当然希望第三方是可靠的，但是你只是寄希望于自己所无法控制的事物身上而已。</p>
+
+<h3 id="拯救回调">拯救回调</h3>
+
+<h4 id="分离回调的设计">分离回调的设计</h4>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">success</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//do something</span>
+<span class="p">}</span>
+<span class="kd">function</span> <span class="nx">failure</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">//handler error</span>
+<span class="p">}</span>
+<span class="nx">ajax</span><span class="p">(</span><span class="dl">'</span><span class="s1">http://xiaokedada.com</span><span class="dl">'</span><span class="p">,</span> <span class="nx">success</span><span class="p">,</span> <span class="nx">failure</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>API 设计的时候通过分离回调，例如上面的例子，一个用于成功的通知，一个用于错误的通知。</p>
+
+<blockquote>
+  <p>Promise 就是采用这种 分离回调 的设计。</p>
+</blockquote>
+
+<h4 id="错误优先风格">错误优先风格</h4>
+
+<p>这个 Node.js 惯常使用的一个回调风格。上面的这个例子就是这样的一个风格。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">readFile</span> <span class="p">(</span><span class="dl">"</span><span class="s2">my.txt</span><span class="dl">"</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">err</span><span class="p">,</span><span class="nx">contents</span><span class="p">){</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+      <span class="k">throw</span> <span class="nx">err</span><span class="p">;</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">contents</span><span class="p">)</span>
+<span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">i love yuer</span><span class="dl">'</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>但是，这两种方法都不能真正地拯救回调，并不能真正地解决信任危机。</p>
+
+<hr />
+
+<h2 id="promise">Promise</h2>
+
+<h3 id="基本概念">基本概念</h3>
+
+<p>Promises 是针对回调的 <em>控制反转</em> 提供解决方案。这意味着 <em>不是将程序交给第三方，而是希望它返回给我们一个可知道它何时完成的东西，让我们自己决定下一步做什么</em>。也就是，将 <em>控制反转</em> 再反转过来。</p>
+
+<blockquote>
+  <p>Promise 是一个对象，用来传递异步操作的消息。代表了某个未来才会知道结果的事件。 《ES6 标准入门》</p>
+</blockquote>
+
+<p>Promise 的对象的状态不受外部影响，也称为 promise 的生命周期。</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">pending</code>: 挂起状态，一开始都处于这个状态。</li>
+  <li><code class="language-plaintext highlighter-rouge">resolved</code>: 异步操作已完成</li>
+  <li><code class="language-plaintext highlighter-rouge">rejected</code>: 异步操作失败</li>
+</ul>
+
+<blockquote>
+  <p>pending 状态的 promise 被认为是 <code class="language-plaintext highlighter-rouge">unsettled</code>。一旦异步操作完成(不管是成功还是失败)，就被认为是 <code class="language-plaintext highlighter-rouge">settled</code>。</p>
+</blockquote>
+
+<p>Promise 的状态一旦改变就不会再变。也就是说，promise 对象的改变只有两种方式: 从 pending 变成 resolved 和 从 pending 变成 rejected。只要二者之一发生，状态就凝固了，不会再变，任何时候访问都是这个结果。</p>
+
+<blockquote>
+  <p>这和 事件机制 完全不同，一旦错过，再去监听就得不到结果。</p>
+</blockquote>
+
+<p>所以的 promise 都有一个 <code class="language-plaintext highlighter-rouge">then()</code> 方法来指定异步操作完成后的一些操作，接受两个参数，第一个参数是 promise 为 fulfilled 状态下调用的函数，第二个参数是 promise 为 rejected 状态下调用的函数。其中，第二个参数是可选的。</p>
+
+<p>我们举个 promise 操作 AJAX 的例子来认识一下:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">getJSON</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">url</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">promise</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">){</span>
+    <span class="kd">var</span> <span class="nx">client</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">XMLHttpRequest</span><span class="p">();</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">open</span><span class="p">(</span><span class="dl">"</span><span class="s2">GET</span><span class="dl">"</span><span class="p">,</span> <span class="nx">url</span><span class="p">);</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">onreadystatechange</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">;</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">responseType</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">json</span><span class="dl">"</span><span class="p">;</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">setRequestHeader</span><span class="p">(</span><span class="dl">"</span><span class="s2">Accept</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">application/json</span><span class="dl">"</span><span class="p">);</span>
+    <span class="nx">client</span><span class="p">.</span><span class="nx">send</span><span class="p">();</span>
+
+    <span class="kd">function</span> <span class="nx">handler</span><span class="p">()</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">readyState</span> <span class="o">!==</span> <span class="mi">4</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">response</span><span class="p">);</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">reject</span><span class="p">(</span><span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">statusText</span><span class="p">));</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+  <span class="p">});</span>
+
+  <span class="k">return</span> <span class="nx">promise</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="nx">getJSON</span><span class="p">(</span><span class="dl">"</span><span class="s2">/posts.json</span><span class="dl">"</span><span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">json</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">Contents: </span><span class="dl">'</span> <span class="o">+</span> <span class="nx">json</span><span class="p">);</span>
+<span class="p">},</span> <span class="kd">function</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="dl">'</span><span class="s1">出错了</span><span class="dl">'</span><span class="p">,</span> <span class="nx">error</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>例子来源 《ES6 标准入门》</p>
+</blockquote>
+
+<p>这个例子中，promise 对象通过 Promise 构造函数构建。构造函数接收一个执行函数，该执行函数接收 resolve() 和 reject() 两个参数。resolve() 函数会在执行函数成功运行后表示该 promise 可用，而 reject() 函数代表该执行函数运行失败。然后调用 <code class="language-plaintext highlighter-rouge">then()</code> 方法，这个方法会在 promise 状态改变的时候进行 <strong>异步调用</strong>，返回一个新的 Promise 实例。</p>
+
+<p>比如下面我写的这个例子:</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">foo</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">x</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="nx">reject</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="kd">let</span> <span class="nx">promise</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="nx">promise</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">resolved</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">},</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">error</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+<span class="cm">/*
+yuer
+resolved
+*/</span>
+</code></pre></div></div>
+
+<p>由于 <code class="language-plaintext highlighter-rouge">then()</code> 是异步调用，所以会先输出 <code class="language-plaintext highlighter-rouge">yuer</code>，然后是成功的结果。</p>
+
+<blockquote>
+  <p>以这种方式实现 then() 方法的对象称为 thenable。所有的 promise 都是 thenable，但不是所有的 thenable 都是 promise。</p>
+</blockquote>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">thenable</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="na">then</span><span class="p">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="nx">reject</span><span class="p">){</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+<span class="kd">let</span> <span class="nx">p</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">thenable</span><span class="p">);</span>
+<span class="nx">p</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">){</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">I love </span><span class="dl">'</span> <span class="o">+</span> <span class="nx">value</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">thenable</code> 根本不像 Promise，但会被认为是一个 thenable。通过调用 Promise.resolve() 将这个对象转化为 完成 状态的 promise。</p>
+
+<h3 id="catch">catch()</h3>
+
+<p>刚才我们讲过 <code class="language-plaintext highlighter-rouge">then()</code> 函数，而 <code class="language-plaintext highlighter-rouge">catch()</code> 主要是接受一个 rejected 作为回调，等同于 <code class="language-plaintext highlighter-rouge">then(null,rejected)</code>。这也就是说，它和 then() 一样，返回一个 Promise 对象。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">foo</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">x</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="nx">reject</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="kd">let</span> <span class="nx">promise</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="nx">promise</span><span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">rejected</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">})</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+<span class="cm">/*
+yuer
+*/</span>
+</code></pre></div></div>
+
+<h3 id="promise-链">promise 链</h3>
+
+<p>刚才有说到，then() 和 catch() 都会返回一个 Promise 实例，就可以使用它们构建 promise 链。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">foo</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">resolve</span><span class="p">,</span><span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">x</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="nx">reject</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+        <span class="nx">resolve</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+    <span class="p">});</span>
+<span class="p">}</span>
+<span class="kd">let</span> <span class="nx">promise</span> <span class="o">=</span> <span class="nx">foo</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+
+<span class="nx">promise</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">resolved</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">},</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">error</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">}).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">another resolved</span><span class="dl">'</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+<span class="cm">/*
+yuer
+resolved
+another resolved
+*/</span>
+</code></pre></div></div>
+
+<h3 id="new-promise-构造器">new Promise() 构造器</h3>
+
+<p>上面我们展示了 new Promise() 的用法，接收一个处理回调函数，这个函数是 <strong>同步或者立即执行</strong> 的。同时，这个函数还接收两个函数回调，<code class="language-plaintext highlighter-rouge">resolve()</code> 和 <code class="language-plaintext highlighter-rouge">reject()</code>。reject() 用于拒绝这个 promise，但 resolve() 可能完成 promise，也可能需要进一步决议这个 promise。</p>
+
+<p>如果传给 <code class="language-plaintext highlighter-rouge">resolved()</code> 的是一个非 Promise、非 thenable 的立即值，这个 promise 就会这个值立即完成。如果是一个真正的 Promise 或 thenable 值，这个值会被递归展开，而且无论它最终解析结果/状态是什么，都会被 promise 采用。</p>
+
+<h3 id="创建-settled-promise">创建 settled promise</h3>
+
+<p>通过 new Promise() 我们创建的是 unsettled 的 promise，也就是说创建完 promise 之后，它的状态是未定的。而创建 已定 的promise，我们是通过 <code class="language-plaintext highlighter-rouge">Promise.resolve()</code> 和 <code class="language-plaintext highlighter-rouge">Promise.reject()</code> 来创建。</p>
+
+<ul>
+  <li>Promise.resolve() 方法接收单个参数并返回一个 完成状态 的 promise。</li>
+</ul>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">promise</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+
+<span class="nx">promise</span><span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">str</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">I love </span><span class="dl">'</span><span class="o">+</span> <span class="nx">str</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="cm">/*
+I love yuer
+*/</span>
+</code></pre></div></div>
+
+<p>如果传递的是 catch() 处理，则永远不会被调用，因为 promise 不存在 rejected 状态。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">promise</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span>
+
+<span class="c1">// 永远不会被调用</span>
+<span class="nx">promise</span><span class="p">.</span><span class="k">catch</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">str</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">'</span><span class="s1">I love </span><span class="dl">'</span><span class="o">+</span> <span class="nx">str</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div></div>
+
+<h3 id="promiseall-和-promiserace">Promise.all([…]) 和 Promise.race([…])</h3>
+
+<p>有两个辅助函数 Promise.all([…]) 和 Promise.race([…])。对 Promise.all([…]) 来说，只要传入的所有 promises 都完成，返回 promise 才能完成。如果有任何 promise 被拒绝，返回的 promise 就会被拒绝。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">p1</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">xiaoke</span><span class="dl">'</span><span class="p">);</span> <span class="c1">// 完成</span>
+<span class="kd">var</span> <span class="nx">p2</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="dl">'</span><span class="s1">yuer</span><span class="dl">'</span><span class="p">);</span> <span class="c1">// 完成</span>
+<span class="kd">var</span> <span class="nx">p3</span> <span class="o">=</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">reject</span><span class="p">(</span><span class="dl">'</span><span class="s1">Oops</span><span class="dl">'</span><span class="p">);</span> <span class="c1">// 拒绝</span>
+
+<span class="nb">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">([</span><span class="nx">p1</span><span class="p">,</span><span class="nx">p2</span><span class="p">,</span><span class="nx">p3</span><span class="p">]).</span><span class="k">catch</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">err</span><span class="p">);</span>
+<span class="p">});</span> <span class="c1">// p3 拒绝，所以 Promise.all() 返回的 promise 被拒绝</span>
+<span class="nb">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">([</span><span class="nx">p1</span><span class="p">,</span><span class="nx">p2</span><span class="p">]).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">msgs</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">msgs</span><span class="p">);</span>
+<span class="p">});</span> <span class="c1">// p1, p2 都完成，返回的 promise 为完成</span>
+<span class="cm">/*
+Oops
+[ 'xiaoke', 'yuer' ]
+*/</span>
+</code></pre></div></div>
+
+<p>Promise.race([…]) 也好理解，只有第一个决议的 promise 取胜(有可能是 完成，也有可能是 拒绝)。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">Promise</span><span class="p">.</span><span class="nx">race</span><span class="p">([</span><span class="nx">p2</span><span class="p">,</span><span class="nx">p1</span><span class="p">,</span><span class="nx">p3</span><span class="p">]).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">msg</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="cm">/*
+yuer
+*/</span>
+</code></pre></div></div>
+
+<blockquote>
+  <p>向 Promise.all([…]) 传入空数组会立即完成，但 Promise.race([…]) 会永远挂起，永远不会决议。</p>
+</blockquote>
+
+<h3 id="promise-不可撤销">Promise 不可撤销</h3>
+
+<p>一旦创建了 Promise 并且注册了一个 完成/拒绝 的回调函数，就没有什么可以从外部取停止这个过程。</p>
+
+<hr />
+
+<h2 id="async-和-await">async 和 await</h2>
+
+<p><code class="language-plaintext highlighter-rouge">async</code> 和 <code class="language-plaintext highlighter-rouge">await</code> 将 Generator 和 Promise 结合起来，以一种更为“优雅”的方式进行异步调用。</p>
+
+<p><code class="language-plaintext highlighter-rouge">async</code> 用在 <code class="language-plaintext highlighter-rouge">function</code> 关键字前面(并不一定非在 function 前面，对象的方法前面也是可以的)。表达一个意思：<strong>函数总是返回的一个promise</strong>。如果函数返回一个 <code class="language-plaintext highlighter-rouge">&lt;non-promise&gt;</code> 的代码，会被自动包装成一个 resolved promise。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="mi">1</span>
+<span class="p">}</span>
+<span class="nx">foo</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">)</span> <span class="c1">// 1</span>
+
+<span class="c1">//显式</span>
+<span class="k">async</span> <span class="kd">function</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nb">Promise</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">await</code> 只能用在 <code class="language-plaintext highlighter-rouge">async function</code> 内部，使代码停止运行直到 Promise 完成(解析成功或被拒绝)并返回一个结果。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nx">foo</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">promise</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">setTimeout</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="dl">"</span><span class="s2">done!</span><span class="dl">"</span><span class="p">),</span> <span class="mi">1000</span><span class="p">))</span>
+    <span class="kd">let</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">promise</span> <span class="c1">// *</span>
+    <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="nx">foo</span><span class="p">()</span> <span class="c1">// "done!"</span>
+</code></pre></div></div>
+
+<p>代码运行到 * 处暂停，然后等待 Promise 完成。在等待期间，<code class="language-plaintext highlighter-rouge">await</code> 不占用 CPU 资源，CPU 可以处理其他事情。</p>
+
+<p><code class="language-plaintext highlighter-rouge">async</code> 和 <code class="language-plaintext highlighter-rouge">await</code> 的优雅之处是，以同步的方式书写异步代码。在之前的介绍中，Promise 可以解决回调函数 “回调地狱” 问题，但是同样带来了 “链式地狱” 的问题。</p>
+
+<p>先写一个 Promise 的例子，使用 Github 的 API。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">https://api.github.com/users/maoxiaoke</span><span class="dl">'</span><span class="p">)</span> <span class="c1">//获取用户 maoxiaoke 的 github 信息</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">response</span> <span class="o">=&gt;</span> <span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">())</span>
+<span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">githubUser</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="dl">'</span><span class="s1">img</span><span class="dl">'</span><span class="p">)</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">githubUser</span><span class="p">.</span><span class="nx">avatar_url</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="dl">'</span><span class="s1">maoxiaoke</span><span class="dl">'</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+    <span class="nx">setTimeout</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">img</span><span class="p">),</span> <span class="mi">3000</span><span class="p">)</span>
+<span class="p">})</span>
+</code></pre></div></div>
+
+<p>现在用 <code class="language-plaintext highlighter-rouge">async</code> 和 <code class="language-plaintext highlighter-rouge">await</code> 改写。首先用 <code class="language-plaintext highlighter-rouge">async</code> 声明一个函数，然后在函数中使用 <code class="language-plaintext highlighter-rouge">await</code>。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nx">showAvatar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">https://api.github.com/users/maoxiaoke</span><span class="dl">'</span><span class="p">)</span> 
+    <span class="kd">let</span> <span class="nx">githubUser</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+
+    <span class="kd">let</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="dl">'</span><span class="s1">img</span><span class="dl">'</span><span class="p">);</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">githubUser</span><span class="p">.</span><span class="nx">avatar_url</span><span class="p">;</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">promise-avatar-example</span><span class="dl">"</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="mi">3000</span><span class="p">));</span>
+
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="nx">showAvatar</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p><strong>处理异常情况</strong>：Promise 使用 reject() 来处理拒绝的情况，<code class="language-plaintext highlighter-rouge">async</code> 和 <code class="language-plaintext highlighter-rouge">await</code> 采用 <code class="language-plaintext highlighter-rouge">try...catch...</code> 来处理。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nx">showAvatar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">try</span> <span class="p">{</span>
+        <span class="kd">let</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">...</span><span class="dl">'</span><span class="p">)</span> <span class="c1">//获取用户 maoxiaoke 的 github 信息</span>
+        <span class="kd">let</span> <span class="nx">githubUser</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+
+        <span class="kd">let</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="dl">'</span><span class="s1">img</span><span class="dl">'</span><span class="p">);</span>
+        <span class="nx">img</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">githubUser</span><span class="p">.</span><span class="nx">avatar_url</span><span class="p">;</span>
+        <span class="nx">img</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">promise-avatar-example</span><span class="dl">"</span><span class="p">;</span>
+        <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+
+        <span class="k">await</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="mi">3000</span><span class="p">));</span>
+
+        <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+    <span class="p">}</span> <span class="k">catch</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">alert</span><span class="p">(</span><span class="nx">e</span><span class="p">)</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="nx">showAvatar</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>也可以这样：</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">async</span> <span class="kd">function</span> <span class="nx">showAvatar</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">response</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">fetch</span><span class="p">(</span><span class="dl">'</span><span class="s1">...</span><span class="dl">'</span><span class="p">)</span> <span class="c1">//获取用户 maoxiaoke 的 github 信息</span>
+    <span class="kd">let</span> <span class="nx">githubUser</span> <span class="o">=</span> <span class="k">await</span> <span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+
+    <span class="kd">let</span> <span class="nx">img</span> <span class="o">=</span> <span class="nb">document</span><span class="p">.</span><span class="nx">createElement</span><span class="p">(</span><span class="dl">'</span><span class="s1">img</span><span class="dl">'</span><span class="p">);</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">src</span> <span class="o">=</span> <span class="nx">githubUser</span><span class="p">.</span><span class="nx">avatar_url</span><span class="p">;</span>
+    <span class="nx">img</span><span class="p">.</span><span class="nx">className</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">promise-avatar-example</span><span class="dl">"</span><span class="p">;</span>
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">appendChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+
+    <span class="k">await</span> <span class="k">new</span> <span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="mi">3000</span><span class="p">));</span>
+
+    <span class="nb">document</span><span class="p">.</span><span class="nx">body</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">img</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="nx">showAvatar</span><span class="p">().</span><span class="k">catch</span><span class="p">(</span><span class="nx">alert</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">await</code> 还支持 <code class="language-plaintext highlighter-rouge">thenable</code>。所有的 Promise 都是 thenable，但不是所有的 thenable 是 Promise。这样的一些 thenable 对象(一般包含可调用的 then 方法)如果支持可调用的 then 方法，就能使用 <code class="language-plaintext highlighter-rouge">await</code>。</p>
+
+<div class="language-js highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">class</span> <span class="nx">Thenable</span> <span class="p">{</span>
+  <span class="kd">constructor</span><span class="p">(</span><span class="nx">num</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">num</span> <span class="o">=</span> <span class="nx">num</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="nx">then</span><span class="p">(</span><span class="nx">resolve</span><span class="p">,</span> <span class="nx">reject</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">alert</span><span class="p">(</span><span class="nx">resolve</span><span class="p">);</span> 
+    <span class="nx">setTimeout</span><span class="p">(()</span> <span class="o">=&gt;</span> <span class="nx">resolve</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">num</span> <span class="o">*</span> <span class="mi">2</span><span class="p">),</span> <span class="mi">1000</span><span class="p">);</span> <span class="c1">// (*)</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">async</span> <span class="kd">function</span> <span class="nx">f</span><span class="p">()</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">result</span> <span class="o">=</span> <span class="k">await</span> <span class="k">new</span> <span class="nx">Thenable</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="nx">alert</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="nx">f</span><span class="p">();</span>
+</code></pre></div></div>
+:ET

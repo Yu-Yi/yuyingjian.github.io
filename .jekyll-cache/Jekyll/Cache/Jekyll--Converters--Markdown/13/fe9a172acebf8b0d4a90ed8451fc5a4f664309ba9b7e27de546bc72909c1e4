@@ -1,0 +1,117 @@
+I"v<ul id="markdown-toc">
+  <li><a href="#如何找到一个开源翻译项目" id="markdown-toc-如何找到一个开源翻译项目">如何找到一个开源翻译项目</a></li>
+  <li><a href="#正确姿势" id="markdown-toc-正确姿势">正确姿势</a>    <ul>
+      <li><a href="#fork" id="markdown-toc-fork">fork</a></li>
+      <li><a href="#clone-自己的仓库到本地" id="markdown-toc-clone-自己的仓库到本地">clone 自己的仓库到本地</a></li>
+      <li><a href="#同步原作者的仓库" id="markdown-toc-同步原作者的仓库">同步原作者的仓库</a></li>
+      <li><a href="#在分支上更改内容" id="markdown-toc-在分支上更改内容">在分支上更改内容</a></li>
+      <li><a href="#pr" id="markdown-toc-pr">PR</a></li>
+      <li><a href="#给你的-pr-加-label" id="markdown-toc-给你的-pr-加-label">给你的 PR 加 label</a></li>
+    </ul>
+  </li>
+  <li><a href="#静静等待原作者的答复吧" id="markdown-toc-静静等待原作者的答复吧">静静等待原作者的答复吧</a></li>
+</ul>
+
+<p>开源是一种精神。</p>
+
+<p>从今年三月份开始，就参与到一个开源的翻译项目中。项目名称是：<a href="https://github.com/iliakan/javascript-tutorial-cn">JavaScript tutorial</a>，是一个免费的 JavaScript 的教程，作者在 Github 开源。欢迎大家加入进来。</p>
+
+<!-- more -->
+
+<p>首先，我想大家会提到的一个问题是：</p>
+
+<h2 id="如何找到一个开源翻译项目">如何找到一个开源翻译项目</h2>
+
+<p>搜索的能力是一个优秀程序员所必备的功能，现在社会，不再是闭门造车。<a href="https://github.com/trending">Github trending</a> 页面就是一个收集最近 Github 上的一些开源流行库。</p>
+
+<p>那么，找到一个可供翻译的开源库之后，怎么办呢？第一步当然是向原作者提出翻译申请。比如，我们的这个翻译项目中，原作者提供一个 <code class="language-plaintext highlighter-rouge">javascript-tutorial-cn</code>，接下来，可以开始我们的翻译工作。</p>
+
+<hr />
+
+<h2 id="正确姿势">正确姿势</h2>
+
+<p>一千个人中有一千个翻译姿势，哪种姿势较为正确，不伤身体呢？这值得考量。</p>
+
+<h3 id="fork">fork</h3>
+
+<p>通常情况下，我们需要 <code class="language-plaintext highlighter-rouge">fork</code> 原作者的仓库。</p>
+
+<p><img src="/styles/images/translation/trans_01.png" alt="fork" /></p>
+
+<h3 id="clone-自己的仓库到本地">clone 自己的仓库到本地</h3>
+
+<p>使用 <code class="language-plaintext highlighter-rouge">git clone</code> 将仓库 <code class="language-plaintext highlighter-rouge">clone</code> 到本地。</p>
+
+<h3 id="同步原作者的仓库">同步原作者的仓库</h3>
+
+<p>我们 <code class="language-plaintext highlighter-rouge">clone</code> 了原作者的仓库，可是，如果原作者的仓库有修改，我们如何同步原作者的仓库呢。</p>
+
+<p>使用命令 <code class="language-plaintext highlighter-rouge">git remote add upstream</code>，后面跟随的是原作者的仓库地址。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git remote add upstream https://github.com/iliakan/javascript-tutorial-cn
+</code></pre></div></div>
+
+<p>我们使用 <code class="language-plaintext highlighter-rouge">git remote -v</code> 来查看。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git remote <span class="nt">-v</span>
+origin  https://github.com/maoxiaoke/javascript-tutorial-cn <span class="o">(</span>fetch<span class="o">)</span>
+origin  https://github.com/maoxiaoke/javascript-tutorial-cn <span class="o">(</span>push<span class="o">)</span>
+upstream        https://github.com/iliakan/javascript-tutorial-cn <span class="o">(</span>fetch<span class="o">)</span>
+upstream        https://github.com/iliakan/javascript-tutorial-cn <span class="o">(</span>push<span class="o">)</span>
+</code></pre></div></div>
+
+<p>之后，只要原作者有更改，就可以使用 <code class="language-plaintext highlighter-rouge">git pull</code> 来拉取更改的内容了。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git pull upstream master
+From https://github.com/iliakan/javascript-tutorial-cn
+ <span class="k">*</span> branch            master     -&gt; FETCH_HEAD
+Already up-to-date.
+</code></pre></div></div>
+
+<blockquote>
+  <p>关于 <code class="language-plaintext highlighter-rouge">git fetch</code> 和 <code class="language-plaintext highlighter-rouge">git pull</code> 的区别，不严格地说，<code class="language-plaintext highlighter-rouge">git pull</code> 等于 <code class="language-plaintext highlighter-rouge">git fetch</code> 加 <code class="language-plaintext highlighter-rouge">git merge</code>。就是说 <code class="language-plaintext highlighter-rouge">git fetch</code> 只是拉取内容，而不会合并到 master 分支。</p>
+</blockquote>
+
+<p>然后，你可以使用 <code class="language-plaintext highlighter-rouge">git push</code> 将内容推送到自己的仓库。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git push origin master
+</code></pre></div></div>
+
+<blockquote>
+  <p>以上的操作，我们一般在 master 分支进行。</p>
+</blockquote>
+
+<h3 id="在分支上更改内容">在分支上更改内容</h3>
+
+<p>非常不建议在 master 上修改内容。所以我们为我们的翻译创建一个分支。在这里，我的做法是，为每一个要翻译的章节创建一个分支。</p>
+
+<p>比如，我为第四小节( <code class="language-plaintext highlighter-rouge">variable</code> )的创建了一个 variable 的分支。</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git checkout <span class="nt">-b</span> variables
+</code></pre></div></div>
+
+<p>在 variables 翻译完成后，使用 <code class="language-plaintext highlighter-rouge">git add</code> 和 <code class="language-plaintext highlighter-rouge">git commit</code> 进行提交。</p>
+
+<p>我的这种情况下，就需要向自己的远程仓库添加分支。如下：</p>
+
+<div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nv">$ </span>git push origin variables:first-steps/variables
+</code></pre></div></div>
+
+<p>第一个是本地分支的名字，第二个是远程分支的名字。</p>
+
+<h3 id="pr">PR</h3>
+
+<p>这个时候，就可以给原作者的仓库提 pull request 了。</p>
+
+<p><img src="/styles/images/translation/trans_02.png" alt="pull request" /></p>
+
+<h3 id="给你的-pr-加-label">给你的 PR 加 label</h3>
+
+<p>通常翻译完成，我们也许还需要校对。所以需要加一个 <code class="language-plaintext highlighter-rouge">need review</code> 的标签是比较合适的。</p>
+
+<hr />
+
+<h2 id="静静等待原作者的答复吧">静静等待原作者的答复吧</h2>
+
+<p>嗯，没错。这就结束了。</p>
+:ET
