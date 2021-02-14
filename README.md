@@ -1,200 +1,232 @@
-# 关于这个Jekyll模板主题 ⚽⚽⚽
+# Chirpy
 
-## 预览
+Language: English | [简体中文](https://github.com/cotes2020/jekyll-theme-chirpy/blob/master/docs/README.zh-CN.md)
 
-### 首页
+[![Gem Version](https://img.shields.io/gem/v/jekyll-theme-chirpy?color=brightgreen)](https://rubygems.org/gems/jekyll-theme-chirpy)
+[![Build Status](https://github.com/cotes2020/jekyll-theme-chirpy/workflows/build/badge.svg?branch=master&event=push)](https://github.com/cotes2020/jekyll-theme-chirpy/actions?query=branch%3Amaster+event%3Apush)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/8220b926db514f13afc3f02b7f884f4b)](https://app.codacy.com/manual/cotes2020/jekyll-theme-chirpy?utm_source=github.com&utm_medium=referral&utm_content=cotes2020/jekyll-theme-chirpy&utm_campaign=Badge_Grade_Dashboard)
+[![GitHub license](https://img.shields.io/github/license/cotes2020/jekyll-theme-chirpy.svg)](https://github.com/cotes2020/jekyll-theme-chirpy/blob/master/LICENSE)
+[![996.icu](https://img.shields.io/badge/link-996.icu-%23FF4D5B.svg)](https://996.icu)
 
-![首页](https://github.com/maoxiaoke/maoxiaoke.github.io/blob/master/styles/images/blog/blog.png?raw=true)
+A minimal, sidebar, responsive web design Jekyll theme that focuses on text presentation. Designed to help you record and share your knowledge easily. [Live Demo »](https://chirpy.cotes.info)
 
-+ 首页: 博客首页
-+ 博文分类: 按照categories对文章进行分类
-+ 标签分类: 按照tags对文章进行分类
-+ 外域链接: 存放一些想要其他网站的链接
-+ DEMO: 存放个人项目
-+ 打赏我: 提供donation
-+ 关于我: 个人CV
+[![Devices Mockup](https://cdn.jsdelivr.net/gh/cotes2020/chirpy-images/commons/devices-mockup.png)](https://chirpy.cotes.info)
 
-### 文章页
+## Table of Contents
 
-![文章页](https://github.com/maoxiaoke/maoxiaoke.github.io/blob/master/styles/images/blog/page.png?raw=true)
+- [Features](#features)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [Credits](#credits)
+- [Support](#support)
+- [License](#license)
 
----
+## Features
 
-## 功能简介
+- Pinned Posts
+- Configurable theme mode
+- Double-level Categories
+- Last modified date for posts
+- Table of Contents
+- Automatically recommend related posts
+- Syntax highlighting
+- Mathematical expressions
+- Mermaid diagram & flowchart
+- Search
+- Atom Feeds
+- Disqus Comments
+- Google Analytics
+- GA Pageviews reporting (Advanced)
+- SEO and Performance Optimization
 
-### 提供全文搜索
+## Prerequisites
 
-博客使用[`Simple-Jekyll-Search`](https://github.com/christian-fei/Simple-Jekyll-Search)提供全文搜索功能。
+Follow the [Jekyll Docs](https://jekyllrb.com/docs/installation/) to complete the installation of `Ruby`, `RubyGems`, `Jekyll` and `Bundler`.
 
-相关介绍和操作可参考: [加入搜索功能](http://xiaokedada.com/2017/05/09/Jekyll-second/#加入搜索功能)
+## Installation
 
-### 提供百度统计功能
+There are two ways to get the theme:
 
-博客使用[百度统计](https://tongji.baidu.com/web/welcome/login)提供统计功能。具体操作方法在官网有详细介绍。
+- **Install from RubyGems** - Easy to update, isolate irrelevant project files so you can focus on writing.
+- **Fork on GitHub** - Convenient for custom development, but difficult to update, only suitable for web developers.
 
-相关介绍和操作可参考: [添加网站统计](http://xiaokedada.com/2017/05/09/Jekyll-second/#添加网站统计)
+### Installing the Theme Gem
 
-### 提供不蒜子pv/uv计数器
+Add this line to your Jekyll site's `Gemfile`:
 
-[不蒜子](http://busuanzi.ibruce.info/)可以提供pv/uv的计数。好处在于可以在界面上显示访问量。
-
-相关介绍和操作可参考: [网页的pv/uv计数器](http://xiaokedada.com/2017/05/09/Jekyll-second/#网页的pvuv计数器)
-
-### 添加社会化评论功能
-
-<del>博客采用第三方评论平台[网易云跟帖](https://gentie.163.com/info.html)</del>。
-
-博客采用第三方评论平台[Gitment](https://github.com/imsun/gitment)
-
-相关介绍和操作可参考: [社会化评论](http://xiaokedada.com/2017/05/09/Jekyll-second/#社会化网页评论)
-
-### 使用canvas实现首页动态效果
-
-### 使用日历控件显示当前日期
-
-[在线演示](http://xiaokedada.com/effects/demo/demo-calender/index.html)
-
-### 使用tagCloud控件实现云标签效果
-
-[在线演示](http://xiaokedada.com/effects/demo/demo-tagscloud/index.html)
-
----
-
-## 博客使用方法
-
-初识Jekyll博客，有必要了解[Jekyll](https://jekyllrb.com/)有关知识。
-
-相关的内容我写了两篇文章可供参考
-
-+ [基于Jekyll静态框架的Github站点设计](http://xiaokedada.com/2017/02/22/Jekyll-Cpanel/)
-+ [Jekyll搭建博客--人类补完计划](http://xiaokedada.com/2017/05/09/Jekyll-second/)
-
-### 部署和安装
-
-请参考[Jekyll相关](http://xiaokedada.com/2017/02/22/Jekyll-Cpanel/#jekyll相关)。
-
-### 下载本博客源码
-
-欢迎fork, clone and star。
-
-### 修改_config.yml文件
-
-包括相关的一些设置参数，包括banner/motto/description等。
-
-> 直接修改便会生效。
-
-### 写文章
-
-文章放在`_post`文件夹下，可创建自命名文件夹。支持markdown编写，提供`post`(知识共享署名-非商业性使用-禁止演绎 4.0 国际许可协议)/`original`(原创文章)两种方式。
-
-文件命名示例如下:
-
-```
-2017-03-23-More-of-prototype.md
+```ruby
+gem "jekyll-theme-chirpy"
 ```
 
-文章首部字段为:
+And add this line to your Jekyll site's `_config.yml`:
 
-```markdown
----
-layout: post
-title: "再谈原型和继承"
-date: 2017-03-23 09:00:00 +0800
-categories: 研究生涯
-tag: JavaScript
----
-* content
-{:toc}
+```yaml
+theme: jekyll-theme-chirpy
 ```
 
-多tag可参考文章:[加入多个标签](http://xiaokedada.com/2017/05/09/Jekyll-second/#如何加入多个标签)
+And then execute:
 
-> 备注一: Jekyll使用时间对文章进行排序，所以无论如何建立文件夹和文件夹命名都行，你开心就好
-
-> 备注二: 未完成的草稿文章可以放在`_draft`文件夹中
-
-### 运行
-
-使用下面命令可直接运行:
-
-```bash
-$ jekyll s
+```console
+$ bundle
 ```
 
-会开启jekyll服务器，监听在`http://127.0.0.1:4000/`，使用浏览器访问呢。
+Finally, copy the required files from the theme's gem (for detailed files, see [starter project][starter]) to your Jekyll site.
 
-不想查看效果，可直接bulid。
+> **Hint**: To locate the installed theme’s gem, execute:
+>
+> ```console
+> $ bundle info --path jekyll-theme-chirpy
+> ```
 
-```bash
-$ jekyll build
+Or you can [**use the starter template**][use-starter] to create a Jekyll site to save time copying files from theme's gem. We have prepared everything for you there!
+
+### Fork on GitHub
+
+[Fork **Chirpy**](https://github.com/cotes2020/jekyll-theme-chirpy/fork) on GitHub and then clone your fork to local. (Please note that the default branch code is in development.  If you want the blog to be stable, please switch to the [latest tag](https://github.com/cotes2020/jekyll-theme-chirpy/tags) and start writing.)
+
+Install gem dependencies by:
+
+```console
+$ bundle
 ```
 
-> 备注: 草稿区的内容不会显示，如果想要对草稿去内容进行查看，可参考[开启草稿](http://xiaokedada.com/2017/05/09/Jekyll-second/#jekyll的一些使用技巧)
+And then execute:
 
-### 发布
-
-发布请保留主题来源。
-
-```text
-Copyright © 2017 M/J. All rights reserved.
+```console
+$ bash tools/init.sh
 ```
 
----
+> **Note**: If you don't plan to deploy your site on GitHub Pages, append parameter option `--no-gh` at the end of the above command.
 
-## Update Log
+What it does is:
 
-### 2017.07.16
+1. Remove some files or directories from your repository:
+    - `.travis.yml`
+    - files under `_posts`
+    - folder `docs`
 
-- [-] 删除网易云跟帖
-- [+] 将网易云跟帖更改为gitment
-- [+] 添加一个新模块: TalkToMe
+2. If you use the `--no-gh` option, the directory `.github` will be deleted. Otherwise, setup the GitHub Action workflow by removing extension `.hook` of `.github/workflows/pages-deploy.yml.hook`, and then remove the other files and directories in folder `.github`.
 
-### 2017.06.17
+3. Automatically create a commit to save the changes.
 
-- [^] 改变文章字体
-- [+] 增加不蒜子
-- [^] 将多说更改为网易云跟帖
-- [+] 添加搜索功能
-- [^] 代码高亮改为rouge
+## Usage
 
+### Configuration
 
-### 2017.04.20
+Update the variables of `_config.yml` as needed. Some of them are typical options:
 
-- [+] First commit
-- [+] 添加首页Canvas效果
-- [+] 添加日历控件
-- [+] 添加云标签控件
-- [+] 添加社会化评论多说
-- [+] 大量优化
-- [+] 添加favicon.ico
+- `url`
+- `avatar`
+- `timezone`
+- `lang`
 
----
+### Running Local Server
 
-## 打赏
+You may want to preview the site contents before publishing, so just run it by:
 
-<p align="center">所以，如果你喜欢这个博客，有些许收获。就请支持我。</p>
+```console
+$ bundle exec jekyll s
+```
 
-### 赞助方式1： 支付宝付款
+Or run the site on Docker with the following command:
 
-您可以选择手机支付宝扫一扫
+```terminal
+$ docker run -it --rm \
+    --volume="$PWD:/srv/jekyll" \
+    -p 4000:4000 jekyll/jekyll \
+    jekyll serve
+```
 
-<img src="https://github.com/maoxiaoke/maoxiaoke.github.io/blob/master/styles/images/zhifubao.jpg?raw=true" alt="支付宝二维码付款给小可嗒嗒" />
+Open a browser and visit to _<http://localhost:4000>_.
 
-### 赞助方式2： 微信扫一扫
+### Deployment
 
-您可以选择手机微信扫一扫
+Before the deployment begins, checkout the file `_config.yml` and make sure the `url` is configured correctly. Furthermore, if you prefer the [**project site**](https://help.github.com/en/github/working-with-github-pages/about-github-pages#types-of-github-pages-sites) and don't use a custom domain, or you want to visit your website with a base url on a web server other than **GitHub Pages**, remember to change the `baseurl` to your project name that starting with a slash, e.g, `/project-name`.
 
-![微信二维码付款给小可嗒嗒](https://github.com/maoxiaoke/maoxiaoke.github.io/blob/master/styles/images/wechat.jpg?raw=true)
+Now you can choose ONE of the following methods to deploy your Jekyll site.
 
-### 赞助名单
+#### Deploy on GitHub Pages
 
-+ 2017-02-21 09:52:10 收到微信用户xxx的`￥1.00`
-+ 2017-02-21 15:59:00 收到支付宝用户241***@qq.com的`￥6.66`
-+ 2017-02-21 19:53:37 收到微信用户xxx的`￥6.66`
-+ 2017-02-21 22:33:33 收到微信用户xxx`￥6.66`
-+ 2017-02-22 08:36:00 收到支付宝用户116***@qq.com的`￥1.66`
-+ 2017-07-24 22:05:00 收到支付宝用户118***10的`￥6.66`
+For security reasons, GitHub Pages build runs on `safe` mode, which restricts us from using plugins to generate additional page files. Therefore, we can use **GitHub Actions** to build the site, store the built site files on a new branch, and use that branch as the source of the GH Pages service.
 
-手动笔芯
+Quickly check the files needed for GitHub Actions build:
 
----
+- Ensure your Jekyll site has the file `.github/workflows/pages-deploy.yml`. Otherwise, create a new one and fill in the contents of the [workflow file][workflow], and the value of the `on.push.branches` should be the same as your repo's default branch name.
+- Ensuer your Jekyll site has file `tools/test.sh` and `tools/deploy.sh`. Otherwise, copy them from this repo to your Jekyll site.
+
+And then rename your repoistory to `<GH-USERNAME>.github.io` on GitHub.
+
+Now publish your Jekyll site by:
+
+1. Push any commit to remote to trigger the GitHub Actions workflow. Once the build is complete and successful, a new remote branch named `gh-pages` will appear to store the built site files.
+
+2. Browse to your repo's landing page on GitHub and select the branch `gh-pages` as the [publishing source](https://docs.github.com/en/github/working-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site) throught _Settings_ → _Options_ → _GitHub Pages_:
+
+    ![gh-pages-sources](https://cdn.jsdelivr.net/gh/cotes2020/chirpy-images/posts/20190809/gh-pages-sources.png)
+
+3. Visit your website at the address indicated by GitHub.
+
+#### Deploy on Other Platforms
+
+On platforms other than GitHub, we cannot enjoy the convenience of **GitHub Actions**. Therefore, we should build the site locally (or on some other 3rd-party CI platform) and then put the site files on the server.
+
+Go to the root of the source project, build your site by:
+
+```console
+$ JEKYLL_ENV=production bundle exec jekyll b
+```
+
+Or build the site with Docker by:
+
+```terminal
+$ docker run -it --rm \
+    --env JEKYLL_ENV=production \
+    --volume="$PWD:/srv/jekyll" \
+    jekyll/jekyll \
+    jekyll build
+```
+
+Unless you specified the output path, the generated site files will be placed in folder `_site` of the project's root directory. Now you should upload those files to your web server.
+
+## Documentation
+
+For more details and the better reading experience, please check out the [tutorials on demo site](https://chirpy.cotes.info/categories/tutorial/). In the meanwhile, a copy of the tutorial is also available on the [Wiki](https://github.com/cotes2020/jekyll-theme-chirpy/wiki).
+
+## Contributing
+
+The old saying, "Two heads are better than one." Consequently, welcome to report bugs, improve code quality or submit a new feature. For more information, see [contributing guidelines](.github/CONTRIBUTING.md).
+
+## Credits
+
+This theme is mainly built with [Jekyll](https://jekyllrb.com/) ecosystem, [Bootstrap](https://getbootstrap.com/), [Font Awesome](https://fontawesome.com/) and some other wonderful tools (their copyright information can be found in the relevant files).
+
+:tada: Thanks to all the volunteers who contributed to this project, their GitHub IDs are on [this list](https://github.com/cotes2020/jekyll-theme-chirpy/graphs/contributors). Also, I won't forget those guys who submitted the issues or unmerged PR because they reported bugs, shared ideas or inspired me to write more readable documentation.
+
+Also, thank [JetBrains][jb] for providing the open source license.
+
+[![JB-logo](https://cdn.jsdelivr.net/gh/cotes2020/chirpy-images/commons/jetbrains.svg)][jb]
+
+## Support
+
+If you like this theme or find it helpful, please consider sponsoring me, because it will encourage and help me better maintain the project, I will be very grateful!
+
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-orange?logo=buy-me-a-coffee&logoColor=white)](https://www.buymeacoffee.com/coteschung)
+[![Wechat Pay](https://img.shields.io/badge/WeChat%20Pay-brightgreen?logo=wechat&logoColor=white)][cn-donation]
+[![Alipay](https://img.shields.io/badge/Alipay-blue?logo=alipay&logoColor=white)][cn-donation]
+
+## License
+
+This work is published under [MIT](https://github.com/cotes2020/jekyll-theme-chirpy/blob/master/LICENSE) License.
+
+[starter]: https://github.com/cotes2020/chirpy-starter
+[use-starter]: https://github.com/cotes2020/chirpy-starter/generate
+[workflow]: https://github.com/cotes2020/jekyll-theme-chirpy/blob/master/.github/workflows/pages-deploy.yml.hook
+
+<!-- ReadMe links -->
+
+[jb]: https://www.jetbrains.com/?from=jekyll-theme-chirpy
+[cn-donation]: https://cotes.gitee.io/alipay-wechat-donation/
+
